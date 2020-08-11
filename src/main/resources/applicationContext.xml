@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+         http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd
+         http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+         http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+         http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!--
+        此标签用来扫描包以及包下面的类，被扫描到的类就可以使用注解，如@Service等，同时被扫描到后就会被放入IOC容器中，
+        之所以不扫描Controller，就是因为Controller是要交给SpringMVC扫描的，后面会看到
+    -->
+    <!--    开启注解配置-->
+    <context:annotation-config/>
+    <!--    开启包扫描，扫描到的放入IOC容器中，不包括Controller，Controller交给SpringMVC扫描-->
+    <context:component-scan base-package="com.xlj">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!--这里引入之前创建的jdbc配置文件，这样可以很灵活的改变配置，而不需要修改xml文件-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!--配置Druid连接池:引入了jdbc.properties后要用${}这种形式调用-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="url" value="${jdbc.jdbcUrl}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+    </bean>
+
+    <!--
+        配置mybatis整合开发
+        Mybatis首先要有一个数据源，所以我们就将刚刚配置的连接池注入进来
+        然后还需要mapper.xml文件的路径，之前学Mybatis的时候都是手动创建**.xml文件，然后用接口去映射，
+        好消息是mybatis能够帮助我们根据数据库逆向生成这个文件及接口，极大的方便了我们的开发
+        最后就是mybatis的配置文件，我们会在后面看到
+        -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!--配置mybatis 插件-->
+        <property name="plugins">
+            <set>
+                <!--配置pageHelper 分页插件-->
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <props>
+                            <!--方言：-->
+                            <prop key="helperDialect">mysql</prop>
+                        </props>
+                    </property>
+                </bean>
+            </set>
+        </property>
+    </bean>
+
+    <!--
+        配置SqlSession
+        sqlsession的作用就是sql会话，没有这个mybatis就无法真正作用起来，如果你学过mybatis一定知道这个配置的意义，
+        将sqlSessionFactory注入到其中，至于下面那个参数，暂时先不用理解
+        -->
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"/>
+        <constructor-arg name="executorType" value="BATCH"/>
+    </bean>
+
+    <!--    自动扫描将Mapper接口生成代理注入到IOC容器中-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.xlj.dao"/>
+    </bean>
+
+    <!--    配置事务-->
+    <tx:annotation-driven transaction-manager="transactionManager"/>  <!--    事务注解-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+<!--    &lt;!&ndash;AOP开启基于注解的控制,一般使用配置方式进行控制&ndash;&gt;-->
+<!--    <aop:config>-->
+<!--        &lt;!&ndash;切入点表达式&ndash;&gt;-->
+<!--        <aop:pointcut id="txPoint" expression="execution(* com.xlj.service..*(..))"/>-->
+<!--        &lt;!&ndash;事务增强配置&ndash;&gt;-->
+<!--        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>-->
+<!--    </aop:config>-->
+
+<!--    &lt;!&ndash;事务增强&ndash;&gt;-->
+<!--    <tx:advice id="txAdvice">-->
+<!--        <tx:attributes>-->
+<!--            <tx:method name="*"/>-->
+<!--            &lt;!&ndash;以get开始的所有方法&ndash;&gt;-->
+<!--            <tx:method name="get*" read-only="true"/>-->
+<!--        </tx:attributes>-->
+<!--    </tx:advice>-->
+
+</beans>

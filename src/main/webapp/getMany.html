@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" charset="UTF-8">
+    <title>getManyCategory</title>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+</head>
+<body>
+<input type="button" id="sender" value="通过AJAX获取多个对象">
+<div id="messageDiv"></div>
+
+<script>
+    $('#sender').click(function () {
+        var url = "getManyCategory";
+        $.post(
+            url,
+            function (data) {
+                console.log(data);
+                var categorys = $.parseJSON(data);
+                console.log(categorys.length);
+
+                for (i in categorys) {
+                    var old = $("#messageDiv").html();
+                    var category = categorys[i];
+                    $("#messageDiv").html(old + "<br>" + category.id + "-------------" + category.name);
+                }
+
+            });
+    });
+</script>
+</body>
+</html>

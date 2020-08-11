@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xlj.dao.FileInfoMapper">
+    <insert id="addFileInfo" parameterType="FileInfo">
+        insert into file_upload (file_name,file_url) values(#{fileName},#{fileUrl})
+    </insert>
+
+    <select id="findFileById" parameterType="int" resultType="FileInfo">
+        select * from file_upload where file_id = #{fileId}
+    </select>
+
+    <select id="findFiles" resultType="FileInfo">
+        select * from file_upload
+    </select>
+</mapper>

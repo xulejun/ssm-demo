@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" http-equiv="content-type">
+    <title>getOneCategory</title>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+</head>
+<body>
+<input type="button" id="sender" value="通过AJAX获取一个Category对象">
+<div id="messageDiv"></div>
+
+<script>
+    $('#sender').click(function () {
+        var url = "getOneCategory";
+
+        $.post(
+            url,
+            function (data) {
+                var json = JSON.parse(data);
+                var name = json.category.name;
+                var id = json.category.id;
+                $("#messageDiv").html("分类id：" + id + "<br>分类名称：" + name);
+            });
+    });
+</script>
+
+</body>
+</html>
